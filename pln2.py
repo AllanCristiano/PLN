@@ -3,7 +3,7 @@ import nltk
 # Baixa os recursos necessários, caso ainda não estejam disponíveis.
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
-#nltk.download('averaged_perceptron_tagger_eng')
+# nltk.download('averaged_perceptron_tagger_eng')
 
 def get_numerical_phrases(sentence):
     """
@@ -21,7 +21,19 @@ def get_numerical_phrases(sentence):
     """
     # Pré-processamento: garante que símbolos monetários sejam tokens separados.
     sentence = sentence.replace('$', ' $').replace('£', ' £').replace('€', ' €')
-    monetization = {'$': 'Dólar', '£': 'Libra Britânica', '€': 'Euro', 'JP¥': 'Iene Japonês', 'R$': 'Real', '¥': 'Yuan Chinês', '元': 'Yuan Chinês','円': 'Iene Japonês', 'JPY': 'Iene Japonês', 'CNY': 'Yuan Chinês'}
+    monetization = {
+        '$': 'Dólar', 
+        '£': 'Libra Britânica', 
+        '€': 'Euro', 
+        'JP¥': 'Iene Japonês', 
+        'R$': 'Real', 
+        '¥': 'Yuan Chinês', 
+        '元': 'Yuan Chinês',
+        '円': 'Iene Japonês', 
+        'JPY': 'Iene Japonês', 
+        'CNY': 'Yuan Chinês'
+    }
+    
     # Tokenização
     tokens = nltk.word_tokenize(sentence)
     # Etiquetagem de partes do discurso
@@ -30,13 +42,6 @@ def get_numerical_phrases(sentence):
     # Definição da gramática:
     # 1) CurrencyPhrase: pega expressões monetárias (e.g., "$10")
     # 2) NumericalPhrase: expressões numéricas complexas e simples (e.g., "5 books", "more than 5 books")
-
-    # grammar = r"""
-    #     CurrencyPhrase: {<\$><CD>}
-    #     NumericalPhrase: {<NN|NNS>?<RB>?<JJR><IN><CD><NN|NNS>?}
-    #     NumericalPhrase: {<CD><NN|NNS>?}
-    # """
-   
     grammar = r"""
     CurrencyPhrase: {<\$><CD>}
     NumericalPhrase: {<RB|RBR|RBS>*<IN>*<CD><NN|NNS>?}
@@ -56,9 +61,10 @@ def get_numerical_phrases(sentence):
         if label == 'CurrencyPhrase':
             currency, value = None, None
             for token, tag in leaves:
-                currency  = monetization[token]
-                #if token == '$':
-                if tag == "CD":
+                # Verifica se o token é um símbolo monetário conhecido
+                if token in monetization:
+                    currency = monetization[token]
+                elif tag == "CD":
                     value = token
             if value and currency:
                 phrases.append(f"{value} ({currency})")
